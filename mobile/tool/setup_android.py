@@ -57,6 +57,51 @@ def patch_gradle() -> None:
     print("! No encontré build.gradle de la app; revisa minSdk manualmente (>= 24)")
 
 
+MARK = "// phonecam: compileSdk de plugins"
+COMPILE_SDK = 36
+# Algunos plugins (p. ej. bonsoir_android) compilan contra android-33, pero sus
+# dependencias de AndroidX piden 34+. Forzamos el compileSdk de todos los plugins.
+# Solo cambia contra qué API se compila; no afecta en qué teléfonos se instala.
+FIX_KTS = f"""{MARK}
+subprojects {{
+    val fixCompileSdk = {{
+        if (plugins.hasPlugin("com.android.library")) {{
+            val android = extensions.getByName("android")
+            android.javaClass.getMethod("setCompileSdk", java.lang.Integer::class.java)
+                .invoke(android, {COMPILE_SDK})
+        }}
+    }}
+    if (state.executed) fixCompileSdk() else afterEvaluate {{ fixCompileSdk() }}
+}}
+
+"""
+FIX_GROOVY = f"""{MARK}
+subprojects {{ p ->
+    def fixCompileSdk = {{
+        if (p.plugins.hasPlugin("com.android.library")) {{ p.android.compileSdk = {COMPILE_SDK} }}
+    }}
+    if (p.state.executed) fixCompileSdk() else p.afterEvaluate {{ fixCompileSdk() }}
+}}
+
+"""
+
+
+def patch_root_gradle() -> None:
+    for name, fix in (("build.gradle.kts", FIX_KTS), ("build.gradle", FIX_GROOVY)):
+        p = ROOT / "android" / name
+        if not p.exists():
+            continue
+        s = p.read_text(encoding="utf-8")
+        if MARK not in s:
+            # Debe ir antes de `evaluationDependsOn(":app")`, que evalúa los proyectos antes de tiempo.
+            i = s.find("subprojects {")
+            s = s + "\n" + fix if i < 0 else s[:i] + fix + s[i:]
+            p.write_text(s, encoding="utf-8")
+        print(f"✓ android/{name} (compileSdk {COMPILE_SDK} en plugins)")
+        return
+    print("! No encontré android/build.gradle; revisa compileSdk de los plugins manualmente")
+
+
 def main() -> None:
     if not (ROOT / "android").exists():
         run("flutter", "create", "--platforms=android", "--org", "com.personal.phonecam",
@@ -65,6 +110,7 @@ def main() -> None:
         (ROOT / "test/widget_test.dart").unlink(missing_ok=True)
     patch_manifest()
     patch_gradle()
+    patch_root_gradle()
     run("flutter", "pub", "get")
     print("\nListo. Conecta el teléfono con depuración USB y ejecuta:  flutter run --release")
     print("o genera el APK con:  flutter build apk --release")
