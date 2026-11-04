@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Receptor (depurar)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/receiver/phonecam.py",
+      "cwd": "${workspaceFolder}/receiver",
+      "python": "${workspaceFolder}/receiver/.venv/Scripts/python.exe",
+      "args": ["-v"]
+    }
+  ]
+}

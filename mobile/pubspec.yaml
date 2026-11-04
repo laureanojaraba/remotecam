@@ -1,0 +1,25 @@
+name: phonecam
+description: Usa la cámara del teléfono como webcam de la PC.
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_webrtc: ^0.12.5      # captura + codificación por hardware + transporte de baja latencia
+  bonsoir: ^5.1.10             # descubrimiento automático de la PC (mDNS / Bonjour)
+  mobile_scanner: ^6.0.2       # escanear el QR que muestra la PC
+  shared_preferences: ^2.3.3   # recordar última PC y calidad
+  wakelock_plus: ^1.2.8        # que la pantalla no se apague mientras transmite
+  permission_handler: ^11.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

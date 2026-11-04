@@ -1,0 +1,34 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Receptor: ejecutar",
+      "type": "shell",
+      "command": "${workspaceFolder}\\receiver\\run.bat",
+      "options": { "cwd": "${workspaceFolder}\\receiver" },
+      "problemMatcher": [],
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "Receptor: vista previa (sin cámara virtual)",
+      "type": "shell",
+      "command": "${workspaceFolder}\\receiver\\run.bat --output preview",
+      "options": { "cwd": "${workspaceFolder}\\receiver" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Receptor: probar con teléfono simulado",
+      "type": "shell",
+      "command": "${workspaceFolder}\\receiver\\.venv\\Scripts\\python tools\\fake_phone.py --seconds 15",
+      "options": { "cwd": "${workspaceFolder}\\receiver" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Receptor: generar PhoneCam.exe",
+      "type": "shell",
+      "command": "${workspaceFolder}\\receiver\\build_exe.bat",
+      "options": { "cwd": "${workspaceFolder}\\receiver" },
+      "problemMatcher": []
+    }
+  ]
+}

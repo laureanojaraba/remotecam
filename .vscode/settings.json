@@ -1,0 +1,6 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/receiver/.venv/Scripts/python.exe",
+  "files.exclude": { "**/__pycache__": true },
+  "files.eol": "\n",
+  "[bat]": { "files.eol": "\r\n" }
+}

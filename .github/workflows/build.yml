@@ -1,0 +1,78 @@
+name: build
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  receiver-test:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: receiver } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements.txt
+      - name: Prueba de punta a punta con teléfono simulado
+        run: |
+          python phonecam.py --no-gui --output null > recv.log 2>&1 &
+          sleep 3
+          python tools/fake_phone.py --seconds 6
+          sleep 1
+          cat recv.log
+          grep -q "Estado WebRTC: connected" recv.log
+          grep -qE "[1-9][0-9]\.[0-9] fps" recv.log
+
+  receiver-windows:
+    runs-on: windows-latest
+    defaults: { run: { working-directory: receiver } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements.txt pyinstaller
+      - run: >
+          pyinstaller --noconfirm --clean --windowed --name PhoneCam
+          --collect-all aiortc --collect-all av --collect-all aioice --collect-all pylibsrtp
+          --collect-all pyvirtualcam --collect-all zeroconf phonecam.py
+      - run: copy allow_firewall.bat dist\PhoneCam\
+        shell: cmd
+      - uses: actions/upload-artifact@v4
+        with: { name: PhoneCam-Windows, path: receiver/dist/PhoneCam }
+
+  android-apk:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: mobile } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - run: python3 tool/setup_android.py
+      - run: flutter analyze --no-fatal-infos
+      - run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with: { name: PhoneCam-Android, path: mobile/build/app/outputs/flutter-apk/app-release.apk }
+
+  # Al subir una etiqueta (p. ej. `git tag v0.1.0 && git push --tags`) se publica
+  # una Release con el APK y el .zip de Windows, descargables sin iniciar sesión.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [receiver-test, receiver-windows, android-apk]
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: out }
+      - run: |
+          cd out
+          (cd PhoneCam-Windows && zip -qr ../PhoneCam-Windows.zip .)
+          mv PhoneCam-Android/app-release.apk PhoneCam-Android.apk
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            out/PhoneCam-Windows.zip
+            out/PhoneCam-Android.apk

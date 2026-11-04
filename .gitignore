@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.venv/
+receiver/build/
+receiver/dist/
+*.spec
+*.log
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins*
+mobile/pubspec.lock
+mobile/android/
+mobile/ios/
+mobile/test/
+.idea/
