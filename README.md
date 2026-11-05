@@ -47,6 +47,12 @@ Proyecto de uso personal.
    ```
    Se publica en **Releases** con `PhoneCam-Android.apk` y `PhoneCam-Windows.zip`.
 
+**Firma del APK.** Para que cada versión nueva se instale encima de la anterior, el APK se firma siempre con la misma clave. Va en *Settings → Secrets and variables → Actions* del repositorio:
+- `ANDROID_KEYSTORE_BASE64`: el archivo `.jks` en base64.
+- `ANDROID_KEYSTORE_PASSWORD`: su contraseña (alias `phonecam`).
+
+Sin esos secretos, los builds normales se firman con una clave de depuración y los tags fallan. **Guarda una copia del `.jks` y su contraseña:** si se pierden, las actualizaciones obligan a desinstalar la app.
+
 Con la versión `.exe` solo hace falta OBS Studio en la PC: descomprime el zip, ejecuta `allow_firewall.bat` como administrador una vez, y abre `PhoneCam.exe`.
 
 ## Paso a paso

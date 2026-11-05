@@ -57,6 +57,42 @@ def patch_gradle() -> None:
     print("! No encontré build.gradle de la app; revisa minSdk manualmente (>= 24)")
 
 
+SIGN_MARK = "// phonecam: firma de release"
+# Con PHONECAM_KEYSTORE (+ contraseña y alias) firma con la clave fija del proyecto,
+# así las versiones nuevas se instalan encima de las anteriores. Sin ella usa la de depuración.
+SIGN_KTS = f"""    {SIGN_MARK}
+    signingConfigs {{
+        create("phonecamRelease") {{
+            System.getenv("PHONECAM_KEYSTORE")?.let {{ ks ->
+                storeFile = file(ks)
+                storePassword = System.getenv("PHONECAM_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("PHONECAM_KEY_ALIAS") ?: "phonecam"
+                keyPassword = System.getenv("PHONECAM_KEYSTORE_PASSWORD")
+            }}
+        }}
+    }}
+
+"""
+SIGN_RELEASE = ('signingConfig = signingConfigs.getByName('
+                'if (System.getenv("PHONECAM_KEYSTORE") != null) "phonecamRelease" else "debug")')
+
+
+def patch_signing() -> None:
+    p = ROOT / "android/app/build.gradle.kts"
+    if not p.exists():
+        print("! No encontré android/app/build.gradle.kts; la firma de release no se configuró")
+        return
+    s = p.read_text(encoding="utf-8")
+    if SIGN_MARK not in s:
+        old = 'signingConfig = signingConfigs.getByName("debug")'
+        if "    buildTypes {" not in s or old not in s:
+            sys.exit("No pude configurar la firma: build.gradle.kts tiene un formato inesperado")
+        s = s.replace("    buildTypes {", SIGN_KTS + "    buildTypes {", 1)
+        s = s.replace(old, SIGN_RELEASE, 1)
+        p.write_text(s, encoding="utf-8")
+    print("✓ build.gradle.kts (firma de release)")
+
+
 MARK = "// phonecam: compileSdk de plugins"
 COMPILE_SDK = 36
 # Algunos plugins (p. ej. bonsoir_android) compilan contra android-33, pero sus
@@ -110,6 +146,7 @@ def main() -> None:
         (ROOT / "test/widget_test.dart").unlink(missing_ok=True)
     patch_manifest()
     patch_gradle()
+    patch_signing()
     patch_root_gradle()
     run("flutter", "pub", "get")
     print("\nListo. Conecta el teléfono con depuración USB y ejecuta:  flutter run --release")

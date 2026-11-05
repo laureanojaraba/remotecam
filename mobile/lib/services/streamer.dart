@@ -18,11 +18,15 @@ class Streamer {
   final ValueNotifier<String> status = ValueNotifier('Abriendo cámara…');
   final ValueNotifier<bool> connected = ValueNotifier(false);
 
+  /// Cambia cuando la cámara se reabre (la pantalla actualiza la vista previa).
+  final ValueNotifier<MediaStream?> media = ValueNotifier(null);
+
   MediaStream? stream;
   RTCPeerConnection? _pc;
   RTCRtpSender? _sender;
   WebSocket? _ws;
   bool _closed = false;
+  bool _restartCamera = false;
 
   Streamer({required this.target, required this.quality, this.frontCamera = false});
 
@@ -37,7 +41,19 @@ class Streamer {
       },
     });
     stream = s;
+    media.value = s;
     return s;
+  }
+
+  /// La PC dejó de recibir video aunque la conexión seguía viva: reabrimos la cámara.
+  Future<void> _reopenCamera() async {
+    final old = stream;
+    stream = null;
+    for (final t in old?.getTracks() ?? <MediaStreamTrack>[]) {
+      await t.stop();
+    }
+    await old?.dispose();
+    await openCamera();
   }
 
   Future<void> switchCamera() async {
@@ -51,6 +67,11 @@ class Streamer {
   Future<void> run() async {
     while (!_closed) {
       try {
+        if (_restartCamera || stream == null) {
+          _restartCamera = false;
+          status.value = 'Reiniciando cámara…';
+          await _reopenCamera();
+        }
         await _session();
       } catch (e) {
         if (!_closed) status.value = _humanError(e);
@@ -122,6 +143,7 @@ class Streamer {
           await pc.setRemoteDescription(RTCSessionDescription(sdp, 'answer'));
         } else if (msg['type'] == 'bye') {
           if (msg['reason'] == 'replaced') status.value = 'Otro dispositivo tomó la cámara';
+          if (msg['reason'] == 'stalled') _restartCamera = true;
           finish();
         }
       },

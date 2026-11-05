@@ -22,6 +22,7 @@ from . import __version__
 from .output import FramePipeline
 
 log = logging.getLogger(__name__)
+STALL_TIMEOUT = 8.0  # s sin frames estando conectado -> reconectar
 
 
 class ReceiverServer:
@@ -63,27 +64,34 @@ class ReceiverServer:
         )
 
     # ------------------------------------------------------------- sesiones
-    async def _close_session(self) -> None:
+    async def _close_session(self, reason: str = "replaced") -> None:
         pc, ws, task = self._pc, self._ws, self._consumer
         self._pc = self._ws = self._consumer = None
-        if task:
+        if task and task is not asyncio.current_task():
             task.cancel()
         if ws and not ws.closed:
             try:
-                await ws.send_json({"type": "bye", "reason": "replaced"})
+                await ws.send_json({"type": "bye", "reason": reason})
             except Exception:
                 pass
             await ws.close()
         if pc:
             await pc.close()
 
-    async def _consume(self, track) -> None:
+    async def _consume(self, track, pc: RTCPeerConnection, device: str) -> None:
         self.on_event({"event": "streaming"})
         self.pipeline.set_idle_text("Esperando telefono...")
         try:
             while True:
-                frame = await track.recv()
+                frame = await asyncio.wait_for(track.recv(), timeout=STALL_TIMEOUT)
                 self.pipeline.submit(frame)
+        except asyncio.TimeoutError:
+            # La conexión sigue viva pero el video se detuvo: cerramos la sesión para
+            # que el teléfono reinicie la cámara y se reconecte solo.
+            if self._pc is pc:
+                log.warning("Sin video durante %ss; se fuerza la reconexión", STALL_TIMEOUT)
+                await self._close_session(reason="stalled")
+                self.on_event({"event": "disconnected", "device": device})
         except (MediaStreamError, asyncio.CancelledError):
             pass
         finally:
@@ -104,7 +112,7 @@ class ReceiverServer:
         @pc.on("track")
         def on_track(track):
             if track.kind == "video" and self._pc is pc:
-                self._consumer = asyncio.ensure_future(self._consume(track))
+                self._consumer = asyncio.ensure_future(self._consume(track, pc, device))
 
         @pc.on("connectionstatechange")
         async def on_state():

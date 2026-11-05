@@ -36,14 +36,21 @@ class _StreamScreenState extends State<StreamScreen> {
       final stream = await _streamer.openCamera();
       if (!mounted) return;
       setState(() => _renderer.srcObject = stream);
+      _streamer.media.addListener(_onMediaChanged);
       _streamer.run();
     } catch (e) {
       setState(() => _fatal = 'No se pudo abrir la cámara: $e');
     }
   }
 
+  void _onMediaChanged() {
+    final s = _streamer.media.value;
+    if (mounted && s != null) setState(() => _renderer.srcObject = s);
+  }
+
   @override
   void dispose() {
+    _streamer.media.removeListener(_onMediaChanged);
     WakelockPlus.disable();
     _renderer.srcObject = null;
     _renderer.dispose();
