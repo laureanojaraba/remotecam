@@ -162,7 +162,7 @@ class FramePipeline(threading.Thread):
         self._on_stats = on_stats
         self._cond = threading.Condition()
         self._latest = None  # av.VideoFrame o np.ndarray RGB
-        self._stop = False
+        self._stopping = False
         self._idle_text = "Esperando telefono..."
         self.error: Optional[str] = None
         # estadísticas
@@ -199,7 +199,7 @@ class FramePipeline(threading.Thread):
 
     def stop(self) -> None:
         with self._cond:
-            self._stop = True
+            self._stopping = True
             self._cond.notify()
         self.join(timeout=3)
 
@@ -222,9 +222,9 @@ class FramePipeline(threading.Thread):
         try:
             while True:
                 with self._cond:
-                    if self._latest is None and not self._stop and not self._reopen:
+                    if self._latest is None and not self._stopping and not self._reopen:
                         self._cond.wait(timeout=0.2)
-                    if self._stop:
+                    if self._stopping:
                         return
                     frame, self._latest = self._latest, None
                     cfg, reopen = self._cfg, self._reopen
