@@ -88,6 +88,7 @@ Así el teléfono y la PC quedan en una mini red por cable y todo funciona igual
 No hace falta ADB ni drivers.
 
 ## Solución de problemas
+- **"This app wasn't installed" / "No se instaló la app":** suele pasar al tocar el APK en **Files by Google**, que usa un instalador propio. En Files toca **⋮ → Abrir con → Instalador de paquetes**, o descarga el APK desde **Chrome** y ábrelo desde la notificación de descarga. Si ya tenías una versión anterior firmada con otra clave, desinstálala primero.
 - **La PC no aparece en la lista:** usa "Escanear QR". Si tampoco conecta, revisa el firewall (`allow_firewall.bat`) y que la red sea Privada. Algunas redes públicas o de invitados aíslan los dispositivos entre sí.
 - **"Cámara virtual: ..." en la ventana de la PC:** instala o actualiza OBS Studio. Si otra app ya está usando la OBS Virtual Camera (por ejemplo, OBS con la cámara virtual activada), ciérrala.
 - **Registro de errores:** `%APPDATA%\PhoneCam\phonecam.log`.
