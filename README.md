@@ -12,6 +12,21 @@ Proyecto de uso personal.
  └──────────────────────┘   WebSocket :8765  └─────────────────────────────┘
 ```
 
+## ⬇️ Descargas
+
+Siempre la última versión, sin iniciar sesión en GitHub:
+
+| | Descarga |
+|---|---|
+| 📱 **Teléfono Android** | [**PhoneCam-Android.apk**](https://github.com/laureanojaraba/remotecam/releases/latest/download/PhoneCam-Android.apk) |
+| 💻 **PC Windows** | [**PhoneCam-Windows.zip**](https://github.com/laureanojaraba/remotecam/releases/latest/download/PhoneCam-Windows.zip) |
+
+**Instalar en el teléfono:** abre el enlace en Chrome y, al terminar la descarga, toca **Abrir**. Si lo abres desde **Files by Google** y dice *"This app wasn't installed"*, toca **⋮ → Abrir con → Instalador de paquetes**. Las versiones nuevas se instalan encima de la anterior.
+
+**Instalar en la PC:** instala [OBS Studio](https://obsproject.com/) (solo se usa su cámara virtual) y descomprime el zip. Ejecuta `allow_firewall.bat` como administrador una vez y abre `PhoneCam.exe`. En Zoom, Meet u OBS elige la cámara **"OBS Virtual Camera"**.
+
+[Todas las versiones](https://github.com/laureanojaraba/remotecam/releases)
+
 ## Qué resuelve frente a DroidCam
 
 | Problema | Cómo lo resuelve PhoneCam |
