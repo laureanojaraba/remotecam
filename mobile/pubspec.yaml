@@ -11,7 +11,7 @@ dependencies:
     sdk: flutter
   flutter_webrtc: ^0.12.5      # captura + codificación por hardware + transporte de baja latencia
   bonsoir: ^5.1.10             # descubrimiento automático de la PC (mDNS / Bonjour)
-  mobile_scanner: ^6.0.2       # escanear el QR que muestra la PC
+  mobile_scanner: ^7.5.0       # escanear el QR que muestra la PC (7.2+ trae las reglas R8 de ML Kit para release)
   shared_preferences: ^2.3.3   # recordar última PC y calidad
   wakelock_plus: ^1.2.8        # que la pantalla no se apague mientras transmite
   permission_handler: ^11.3.1
